@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OTel Browser Instrumentation Demo</title>
+  <link rel="stylesheet" href="/dist/bundle.css" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════ HEADER ══ -->
+<header>
+  <div>
+    <h1>🔭 OTel Browser Instrumentation Demo</h1>
+    <p>Instruments via <code>@opentelemetry/browser-instrumentation</code> config shape</p>
+  </div>
+  <div id="sdk-status">
+    <div class="dot loading" id="dot"></div>
+    <span id="sdk-label">Initialising SDK…</span>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════ TWO-COL ══ -->
+<div class="two-col">
+
+  <!-- LEFT: SDK config form + actions -->
+  <div class="left-col">
+
+    <div class="card">
+      <div class="card-title">⚙️ SDK Config</div>
+
+      <div class="ub-field">
+        <label class="ub-label" for="ub-sn">serviceName</label>
+        <input class="ub-input" id="ub-sn" type="text" placeholder="my-frontend-app" />
+      </div>
+      <div class="ub-field">
+        <label class="ub-label" for="ub-sv">serviceVersion</label>
+        <input class="ub-input" id="ub-sv" type="text" placeholder="1.0.0" />
+      </div>
+      <div class="ub-field">
+        <label class="ub-label" for="ub-url">
+          otlpUrl
+          <span class="ub-label-note">(→ otlpExporterConfig.url)</span>
+        </label>
+        <input class="ub-input" id="ub-url" type="text" placeholder="http://localhost:4318/v1/traces" />
+      </div>
+      <div class="ub-field">
+        <label class="ub-label" for="ub-hdrs">
+          headers
+          <span class="ub-label-note">(JSON → otlpExporterConfig.headers)</span>
+        </label>
+        <input class="ub-input" id="ub-hdrs" type="text" placeholder='{"api-key":"your-api-key"}' />
+      </div>
+
+      <!-- URL sync -->
+      <div class="ub-result" id="ub-result" title="Click to copy">
+        <span class="ub-url" id="ub-out">—</span>
+        <button class="copy-btn" id="copy-btn">Copy</button>
+      </div>
+      <p class="ub-hint">↑ Updates as you type · click to copy · paste in address bar to reconfigure</p>
+
+      <!-- Custom attributes -->
+      <div class="attrs-section">
+        <div class="card-title">🏷 Custom Attributes</div>
+        <div id="custom-attrs-list"></div>
+        <button class="btn btn-add-attr" id="btn-add-attr">+ Add attribute</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚡ Actions</div>
+      <div class="btn-grid" id="btn-grid">
+        <button class="btn ok"     id="btn-fetch-ok"  disabled>✅ Fetch 200</button>
+        <button class="btn err"    id="btn-fetch-404" disabled>🔴 Fetch 404</button>
+        <button class="btn err"    id="btn-fetch-net" disabled>🌐 Network Error</button>
+        <button class="btn ok"     id="btn-xhr"       disabled>📡 XHR Request</button>
+        <button class="btn err"    id="btn-jserr"     disabled>🐛 JS Error</button>
+        <button class="btn nav"    id="btn-nav"       disabled>🔗 Push History</button>
+        <button class="btn custom" id="btn-custom"    disabled>🎯 Custom Span</button>
+        <button class="btn custom" id="btn-nested"    disabled>🌲 Nested Spans</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT: equivalent SDK init snippet -->
+  <div class="card">
+    <div class="card-title">📝 Equivalent SDK init</div>
+    <div class="code-block" id="code-snippet"></div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════ LOG ══ -->
+<div id="log-wrap">
+  <div class="log-header">
+    <div class="log-title">
+      📄 Event Log
+      <span id="log-count">(0)</span>
+    </div>
+    <button class="log-clear" id="btn-clear-log">Clear</button>
+  </div>
+  <div id="log-body">
+    <div class="le">
+      <span class="le-time">—</span>
+      <span>·</span>
+      <span class="le-msg muted">Waiting for events…</span>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/dist/bundle.js"></script>
+</body>
+</html>

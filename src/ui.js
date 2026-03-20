@@ -1,0 +1,205 @@
+// ui.js — DOM utilities: logging, status pill, form, URL sync, custom attrs
+
+// ── Logging ───────────────────────────────────────────────────────────────────
+
+const LOG_ICONS = {
+  info: 'ℹ', success: '✓', error: '✗', warn: '⚠', span: '◈', nav: '→', muted: '·',
+}
+
+let logCount = 0
+
+function escHtml(s) {
+  return s
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+export function log(type, msg) {
+  const body = document.getElementById('log-body')
+  if (body.querySelector('.le-msg.muted')) body.innerHTML = ''
+
+  const t = new Date().toLocaleTimeString([], {
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  })
+  const entry = document.createElement('div')
+  entry.className = 'le'
+  entry.innerHTML =
+    `<span class="le-time">${t}</span>` +
+    `<span>${LOG_ICONS[type]}</span>` +
+    `<span class="le-msg ${type}">${escHtml(msg)}</span>`
+
+  body.appendChild(entry)
+  body.scrollTop = body.scrollHeight
+  document.getElementById('log-count').textContent = `(${++logCount})`
+}
+
+export function clearLog() {
+  logCount = 0
+  document.getElementById('log-body').innerHTML = `
+    <div class="le">
+      <span class="le-time">—</span>
+      <span>·</span>
+      <span class="le-msg muted">Log cleared.</span>
+    </div>`
+  document.getElementById('log-count').textContent = '(0)'
+}
+
+// ── SDK status pill ───────────────────────────────────────────────────────────
+
+export function setStatus(state, msg) {
+  document.getElementById('dot').className = `dot ${state}`
+  const lbl = document.getElementById('sdk-label')
+  lbl.textContent = msg
+  lbl.style.color =
+    state === 'ok'    ? 'var(--green)' :
+    state === 'error' ? 'var(--red)'   : 'var(--muted)'
+}
+
+// ── Action buttons ────────────────────────────────────────────────────────────
+
+export function enableButtons() {
+  document.querySelectorAll('#btn-grid .btn')
+    .forEach(b => { b.disabled = false })
+}
+
+// ── Code snippet ──────────────────────────────────────────────────────────────
+
+export function updateSnippet(config, customAttrs) {
+  let headersStr = '{}'
+  try { headersStr = JSON.stringify(config.otlpExporterConfig.headers, null, 2) } catch { /* keep default */ }
+
+  const attrsEntries = Object.entries(customAttrs)
+  const attrsStr = attrsEntries.length === 0
+    ? ''
+    : `,\n  <span class="prop">attributes</span>: {\n${
+        attrsEntries.map(([k, v]) =>
+          `    <span class="prop">${escHtml(k)}</span>: <span class="str">'${escHtml(v)}'</span>`
+        ).join(',\n')
+      }\n  }`
+
+  document.getElementById('code-snippet').innerHTML =
+    `<span class="kw">import</span> { <span class="fn">BrowserSDK</span> } <span class="kw">from</span> <span class="str">'@opentelemetry/browser-instrumentation'</span>;
+
+<span class="kw">const</span> sdk = <span class="kw">new</span> <span class="fn">BrowserSDK</span>({
+  <span class="prop">serviceName</span>:    <span class="str">'${escHtml(config.serviceName)}'</span>,
+  <span class="prop">serviceVersion</span>: <span class="str">'${escHtml(config.serviceVersion)}'</span>,
+  <span class="prop">otlpExporterConfig</span>: {
+    <span class="prop">url</span>:     <span class="str">'${escHtml(config.otlpExporterConfig.url)}'</span>,
+    <span class="prop">headers</span>: ${escHtml(headersStr)},
+  }${attrsStr},
+});
+
+sdk.<span class="fn">start</span>();`
+}
+
+// ── URL sync ──────────────────────────────────────────────────────────────────
+
+function buildUrl() {
+  const sn   = document.getElementById('ub-sn').value.trim()
+  const sv   = document.getElementById('ub-sv').value.trim()
+  const url  = document.getElementById('ub-url').value.trim()
+  const hdrs = document.getElementById('ub-hdrs').value.trim()
+  const attrs = readCustomAttributes()
+
+  const p = new URLSearchParams()
+  if (sn)  p.set('serviceName',    sn)
+  if (sv)  p.set('serviceVersion', sv)
+  if (url) p.set('otlpUrl',        url)
+  if (hdrs) {
+    try { JSON.parse(hdrs); p.set('headers', encodeURIComponent(hdrs)) }
+    catch { /* invalid JSON — skip */ }
+  }
+  const attrsEntries = Object.entries(attrs)
+  if (attrsEntries.length > 0) {
+    p.set('attrs', encodeURIComponent(JSON.stringify(attrs)))
+  }
+
+  const qs = p.toString()
+  return location.origin + location.pathname + (qs ? '?' + qs : '')
+}
+
+export function syncUrl() {
+  const url = buildUrl()
+  history.replaceState(null, '', url)
+  const out = document.getElementById('ub-out')
+  if (out) out.textContent = url
+}
+
+function copyUrl() {
+  const url = buildUrl()
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('copy-btn')
+    btn.textContent = '✓ Copied!'
+    setTimeout(() => { btn.textContent = 'Copy' }, 1400)
+  }).catch(() => { /* clipboard unavailable */ })
+}
+
+// ── Config form ───────────────────────────────────────────────────────────────
+
+export function initConfigForm(initialConfig, onChange) {
+  document.getElementById('ub-sn').value  = initialConfig.serviceName
+  document.getElementById('ub-sv').value  = initialConfig.serviceVersion
+  document.getElementById('ub-url').value = initialConfig.otlpExporterConfig.url
+
+  const headersRaw = initialConfig.otlpExporterConfig.headers
+  if (Object.keys(headersRaw).length > 0) {
+    document.getElementById('ub-hdrs').value = JSON.stringify(headersRaw)
+  }
+
+  const handleChange = () => { syncUrl(); onChange() }
+  ;['ub-sn', 'ub-sv', 'ub-url', 'ub-hdrs'].forEach(id =>
+    document.getElementById(id).addEventListener('input', handleChange)
+  )
+
+  // Copy button
+  const ubResult = document.getElementById('ub-result')
+  const copyBtn  = document.getElementById('copy-btn')
+  const doCopy   = (e) => { e.stopPropagation(); copyUrl() }
+  ubResult?.addEventListener('click', doCopy)
+  copyBtn?.addEventListener('click',  doCopy)
+
+  syncUrl()
+}
+
+// ── Custom attributes ─────────────────────────────────────────────────────────
+
+export function readCustomAttributes() {
+  const attrs = {}
+  document.querySelectorAll('.attr-row').forEach(row => {
+    const key = row.querySelector('.attr-key').value.trim()
+    const val = row.querySelector('.attr-val').value.trim()
+    if (key) attrs[key] = val
+  })
+  return attrs
+}
+
+function addAttrRow(key, val, onChange) {
+  const list = document.getElementById('custom-attrs-list')
+  const row  = document.createElement('div')
+  row.className = 'attr-row'
+  row.innerHTML = `
+    <input type="text" class="ub-input attr-key" placeholder="attribute-key" value="${escHtml(key)}" />
+    <span class="attr-sep">:</span>
+    <input type="text" class="ub-input attr-val" placeholder="value" value="${escHtml(val)}" />
+    <button class="attr-remove" title="Remove">×</button>`
+
+  row.querySelector('.attr-remove').addEventListener('click', () => {
+    row.remove()
+    onChange()
+  })
+  row.querySelectorAll('input').forEach(i => i.addEventListener('input', onChange))
+  list.appendChild(row)
+}
+
+export function initCustomAttributes(initialAttrs, onChange) {
+  const handleChange = () => { syncUrl(); onChange() }
+
+  for (const [k, v] of Object.entries(initialAttrs)) {
+    addAttrRow(k, v, handleChange)
+  }
+
+  document.getElementById('btn-add-attr').addEventListener('click', () => {
+    addAttrRow('', '', handleChange)
+    handleChange()
+  })
+}
