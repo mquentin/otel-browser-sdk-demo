@@ -20,8 +20,8 @@ const result = await esbuild.build({
 
 // Copy index.html to dist/ and rewrite asset paths for standalone deployment
 const html = readFileSync('index.html', 'utf8')
-  .replace('/dist/bundle.css', './bundle.css')
-  .replace('/dist/bundle.js',  './bundle.js')
+  .replace('dist/bundle.css', './bundle.css')
+  .replace('dist/bundle.js',  './bundle.js')
 writeFileSync('dist/index.html', html)
 
 // Print bundle sizes
