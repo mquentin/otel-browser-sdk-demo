@@ -45,9 +45,6 @@ try {
   log('info',  `SDK initialised — service="${config.serviceName}" v${config.serviceVersion}`)
   log('info',  `OTLP endpoint → ${config.otlpExporterConfig.url}`)
 
-  const headerKeys = Object.keys(config.otlpExporterConfig.headers)
-  if (headerKeys.length > 0) log('info', `Headers: ${headerKeys.join(', ')}`)
-
   log('muted', 'Open DevTools → Console to see full span objects')
 } catch (err) {
   const msg = err instanceof Error ? err.message : String(err)

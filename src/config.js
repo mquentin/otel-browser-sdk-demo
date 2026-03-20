@@ -28,11 +28,10 @@ function parseJson(raw, fallback) {
 export function parseConfigFromQueryString() {
   const qs = new URLSearchParams(location.search)
   return {
-    serviceName:    qs.get('serviceName')    ?? DEFAULTS.serviceName,
-    serviceVersion: qs.get('serviceVersion') ?? DEFAULTS.serviceVersion,
+    serviceName:      qs.get('serviceName')    ?? DEFAULTS.serviceName,
+    serviceVersion:   qs.get('serviceVersion') ?? DEFAULTS.serviceVersion,
     otlpExporterConfig: {
-      url:     qs.get('otlpUrl') ?? DEFAULTS.otlpUrl,
-      headers: parseJson(qs.get('headers'), {}),
+      url: qs.get('otlpUrl') ?? DEFAULTS.otlpUrl,
     },
     customAttributes: parseJson(qs.get('attrs'), {}),
   }
@@ -48,8 +47,7 @@ export function readConfigFromForm() {
     serviceName:    field('ub-sn')  || DEFAULTS.serviceName,
     serviceVersion: field('ub-sv')  || DEFAULTS.serviceVersion,
     otlpExporterConfig: {
-      url:     field('ub-url') || DEFAULTS.otlpUrl,
-      headers: parseJson(field('ub-hdrs') || null, {}),
+      url: field('ub-url') || DEFAULTS.otlpUrl,
     },
     customAttributes: {},  // populated separately via readCustomAttributes()
   }

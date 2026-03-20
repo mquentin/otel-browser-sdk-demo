@@ -65,9 +65,6 @@ export function enableButtons() {
 // ── Code snippet ──────────────────────────────────────────────────────────────
 
 export function updateSnippet(config, customAttrs) {
-  let headersStr = '{}'
-  try { headersStr = JSON.stringify(config.otlpExporterConfig.headers, null, 2) } catch { /* keep default */ }
-
   const attrsEntries = Object.entries(customAttrs)
   const attrsStr = attrsEntries.length === 0
     ? ''
@@ -84,8 +81,7 @@ export function updateSnippet(config, customAttrs) {
   <span class="prop">serviceName</span>:    <span class="str">'${escHtml(config.serviceName)}'</span>,
   <span class="prop">serviceVersion</span>: <span class="str">'${escHtml(config.serviceVersion)}'</span>,
   <span class="prop">otlpExporterConfig</span>: {
-    <span class="prop">url</span>:     <span class="str">'${escHtml(config.otlpExporterConfig.url)}'</span>,
-    <span class="prop">headers</span>: ${escHtml(headersStr)},
+    <span class="prop">url</span>: <span class="str">'${escHtml(config.otlpExporterConfig.url)}'</span>,
   }${attrsStr},
 });
 
@@ -98,17 +94,12 @@ function buildUrl() {
   const sn   = document.getElementById('ub-sn').value.trim()
   const sv   = document.getElementById('ub-sv').value.trim()
   const url  = document.getElementById('ub-url').value.trim()
-  const hdrs = document.getElementById('ub-hdrs').value.trim()
   const attrs = readCustomAttributes()
 
   const p = new URLSearchParams()
   if (sn)  p.set('serviceName',    sn)
   if (sv)  p.set('serviceVersion', sv)
   if (url) p.set('otlpUrl',        url)
-  if (hdrs) {
-    try { JSON.parse(hdrs); p.set('headers', encodeURIComponent(hdrs)) }
-    catch { /* invalid JSON — skip */ }
-  }
   const attrsEntries = Object.entries(attrs)
   if (attrsEntries.length > 0) {
     p.set('attrs', encodeURIComponent(JSON.stringify(attrs)))
@@ -141,13 +132,8 @@ export function initConfigForm(initialConfig, onChange) {
   document.getElementById('ub-sv').value  = initialConfig.serviceVersion
   document.getElementById('ub-url').value = initialConfig.otlpExporterConfig.url
 
-  const headersRaw = initialConfig.otlpExporterConfig.headers
-  if (Object.keys(headersRaw).length > 0) {
-    document.getElementById('ub-hdrs').value = JSON.stringify(headersRaw)
-  }
-
   const handleChange = () => { syncUrl(); onChange() }
-  ;['ub-sn', 'ub-sv', 'ub-url', 'ub-hdrs'].forEach(id =>
+  ;['ub-sn', 'ub-sv', 'ub-url'].forEach(id =>
     document.getElementById(id).addEventListener('input', handleChange)
   )
 
