@@ -58,7 +58,7 @@ export function setStatus(state, msg) {
 // ── Action buttons ────────────────────────────────────────────────────────────
 
 export function enableButtons() {
-  document.querySelectorAll('#btn-grid .btn')
+  document.querySelectorAll('#btn-grid .btn, #btn-grid-logs .btn')
     .forEach(b => { b.disabled = false })
 }
 
@@ -74,6 +74,8 @@ export function updateSnippet(config, customAttrs) {
         ).join(',\n')
       }\n  }`
 
+  const base = escHtml(config.otlpExporterConfig.url.replace(/\/$/, ''))
+
   document.getElementById('code-snippet').innerHTML =
     `<span class="kw">import</span> { <span class="fn">BrowserSDK</span> } <span class="kw">from</span> <span class="str">'@opentelemetry/browser-instrumentation'</span>;
 
@@ -81,7 +83,8 @@ export function updateSnippet(config, customAttrs) {
   <span class="prop">serviceName</span>:    <span class="str">'${escHtml(config.serviceName)}'</span>,
   <span class="prop">serviceVersion</span>: <span class="str">'${escHtml(config.serviceVersion)}'</span>,
   <span class="prop">otlpExporterConfig</span>: {
-    <span class="prop">url</span>: <span class="str">'${escHtml(config.otlpExporterConfig.url)}'</span>,
+    <span class="prop">tracesUrl</span>: <span class="str">'${base}/v1/traces'</span>,
+    <span class="prop">logsUrl</span>:   <span class="str">'${base}/v1/logs'</span>,
   }${attrsStr},
 });
 

@@ -3,14 +3,17 @@
 // Query string parameters:
 //   serviceName    → sdkConfig.serviceName
 //   serviceVersion → sdkConfig.serviceVersion
-//   otlpUrl        → sdkConfig.otlpExporterConfig.url
-//   headers        → sdkConfig.otlpExporterConfig.headers  (URL-encoded JSON)
-//   attrs          → sdkConfig.customAttributes             (URL-encoded JSON)
+//   otlpUrl        → sdkConfig.otlpExporterConfig.url  (base collector endpoint)
+//   attrs          → sdkConfig.customAttributes         (URL-encoded JSON)
+//
+// Signal URLs are derived automatically:
+//   traces → otlpUrl + /v1/traces
+//   logs   → otlpUrl + /v1/logs
 
 export const DEFAULTS = {
   serviceName:    'browser-demo',
   serviceVersion: '1.0.0',
-  otlpUrl: 'http://localhost:4318/v1/traces',
+  otlpUrl:        'http://localhost:4318',
 }
 
 function parseJson(raw, fallback) {

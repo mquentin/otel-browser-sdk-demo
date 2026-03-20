@@ -1,13 +1,16 @@
 // actions.js — handlers for each demo button
 
 import { SpanStatusCode } from '@opentelemetry/api'
+import { SeverityNumber } from '@opentelemetry/api-logs'
 import { log } from './ui.js'
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-export function createActions(tracer) {
+export function createActions(tracer, logger) {
+
+  // ── Trace actions ───────────────────────────────────────────────────────────
 
   /** GET a real JSON endpoint → 200 OK */
   const fetchOk = async () => {
@@ -127,5 +130,40 @@ export function createActions(tracer) {
     log('success', 'Workflow complete — 4 spans created')
   }
 
-  return { fetchOk, fetch404, fetchNetErr, xhr, jsError, navigation, customSpan, nestedSpans }
+  // ── Log actions ─────────────────────────────────────────────────────────────
+
+  const logInfo = () => {
+    logger.emit({
+      severityNumber: SeverityNumber.INFO,
+      severityText:   'INFO',
+      body:           'User triggered an info log event',
+      attributes:     { 'log.source': 'manual', 'event.name': 'demo.log_info' },
+    })
+    log('info', '📋 Emitted INFO log record')
+  }
+
+  const logWarn = () => {
+    logger.emit({
+      severityNumber: SeverityNumber.WARN,
+      severityText:   'WARN',
+      body:           'User triggered a warning log event',
+      attributes:     { 'log.source': 'manual', 'event.name': 'demo.log_warn' },
+    })
+    log('warn', '📋 Emitted WARN log record')
+  }
+
+  const logError = () => {
+    logger.emit({
+      severityNumber: SeverityNumber.ERROR,
+      severityText:   'ERROR',
+      body:           'User triggered an error log event',
+      attributes:     { 'log.source': 'manual', 'event.name': 'demo.log_error', 'error.type': 'DemoError' },
+    })
+    log('error', '📋 Emitted ERROR log record')
+  }
+
+  return {
+    fetchOk, fetch404, fetchNetErr, xhr, jsError, navigation, customSpan, nestedSpans,
+    logInfo, logWarn, logError,
+  }
 }

@@ -75,7 +75,11 @@ const noopTracer = {
   startActiveSpan: (_n, fn) => fn(noopSpan),
 }
 
-const actions = createActions(handle?.tracer ?? noopTracer)
+const noopLogger = {
+  emit: () => {},
+}
+
+const actions = createActions(handle?.tracer ?? noopTracer, handle?.logger ?? noopLogger)
 
 function on(id, handler) {
   document.getElementById(id)?.addEventListener('click', () => { void handler() })
@@ -89,6 +93,9 @@ on('btn-jserr',     actions.jsError)
 on('btn-nav',       actions.navigation)
 on('btn-custom',    actions.customSpan)
 on('btn-nested',    actions.nestedSpans)
+on('btn-log-info',  actions.logInfo)
+on('btn-log-warn',  actions.logWarn)
+on('btn-log-error', actions.logError)
 on('btn-clear-log', clearLog)
 
 enableButtons()

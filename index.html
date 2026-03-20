@@ -39,10 +39,10 @@
       </div>
       <div class="ub-field">
         <label class="ub-label" for="ub-url">
-          otlpUrl
-          <span class="ub-label-note">(→ otlpExporterConfig.url)</span>
+          collectorUrl
+          <span class="ub-label-note">(base endpoint, no signal path)</span>
         </label>
-        <input class="ub-input" id="ub-url" type="text" placeholder="http://localhost:4318/v1/traces" />
+        <input class="ub-input" id="ub-url" type="text" placeholder="http://localhost:4318" />
       </div>
 
       <!-- URL sync -->
@@ -61,7 +61,7 @@
     </div>
 
     <div class="card">
-      <div class="card-title">⚡ Actions</div>
+      <div class="card-title">⚡ Traces</div>
       <div class="btn-grid" id="btn-grid">
         <button class="btn ok"     id="btn-fetch-ok"  disabled>✅ Fetch 200</button>
         <button class="btn err"    id="btn-fetch-404" disabled>🔴 Fetch 404</button>
@@ -71,6 +71,15 @@
         <button class="btn nav"    id="btn-nav"       disabled>🔗 Push History</button>
         <button class="btn custom" id="btn-custom"    disabled>🎯 Custom Span</button>
         <button class="btn custom" id="btn-nested"    disabled>🌲 Nested Spans</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Logs</div>
+      <div class="btn-grid" id="btn-grid-logs">
+        <button class="btn ok"  id="btn-log-info"  disabled>ℹ️ Log Info</button>
+        <button class="btn nav" id="btn-log-warn"  disabled>⚠️ Log Warn</button>
+        <button class="btn err" id="btn-log-error" disabled>🚨 Log Error</button>
       </div>
     </div>
 
