@@ -69,27 +69,19 @@ class UILogExporter {
 }
 
 // ── Custom attributes ─────────────────────────────────────────────────────────
-// Single shared attrs state — stamped on both spans (onStart) and log records (onEmit).
-
-const _sharedAttrs = { current: {} }
+// Attrs are stored on the processor instance. The log processor closes over
+// the same instance inside initOtel so both signals share one source of truth.
 
 export class CustomAttributesProcessor {
-  update(attrs) { _sharedAttrs.current = { ...attrs } }
+  attrs = {}
+
+  update(attrs) { this.attrs = { ...attrs } }
 
   // SpanProcessor interface
   onStart(span) {
-    for (const [k, v] of Object.entries(_sharedAttrs.current)) span.setAttribute(k, v)
+    for (const [k, v] of Object.entries(this.attrs)) span.setAttribute(k, v)
   }
   onEnd() {}
-  shutdown()   { return Promise.resolve() }
-  forceFlush() { return Promise.resolve() }
-}
-
-class CustomAttributesLogProcessor {
-  // LogRecordProcessor interface
-  onEmit(logRecord) {
-    for (const [k, v] of Object.entries(_sharedAttrs.current)) logRecord.setAttribute(k, v)
-  }
   shutdown()   { return Promise.resolve() }
   forceFlush() { return Promise.resolve() }
 }
@@ -123,9 +115,15 @@ export function initOtel(config) {
   const logExporter  = new OTLPLogExporter({ url: signalUrl(baseUrl, 'logs') })
   const logProvider  = new LoggerProvider({ resource })
 
-  // CustomAttributesLogProcessor must be first so attrs are stamped before
-  // any exporter (Simple or Batch) sees the record.
-  logProvider.addLogRecordProcessor(new CustomAttributesLogProcessor())
+  // Inline log processor closes over customAttrsProcessor — same instance,
+  // no shared module state needed.
+  logProvider.addLogRecordProcessor({
+    onEmit(logRecord) {
+      for (const [k, v] of Object.entries(customAttrsProcessor.attrs)) logRecord.setAttribute(k, v)
+    },
+    shutdown()   { return Promise.resolve() },
+    forceFlush() { return Promise.resolve() },
+  })
   logProvider.addLogRecordProcessor(new BatchLogRecordProcessor(logExporter, {
     maxExportBatchSize:    10,
     scheduledDelayMillis: 1_000,
