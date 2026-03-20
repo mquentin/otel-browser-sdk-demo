@@ -10,7 +10,7 @@
 export const DEFAULTS = {
   serviceName:    'browser-demo',
   serviceVersion: '1.0.0',
-  otlpUrl:        'http://localhost:4318/v1/traces',
+  otlpUrl: 'http://localhost:4318/v1/traces',
 }
 
 function parseJson(raw, fallback) {
