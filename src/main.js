@@ -40,6 +40,8 @@ let handle = null
 
 try {
   handle = initOtel(config)
+  // Seed the processor with any attrs already in the form (e.g. loaded from QS)
+  handle.customAttrsProcessor.update(readCustomAttributes())
 
   setStatus('ok', `SDK ready · ${config.otlpExporterConfig.url}`)
   log('info',  `SDK initialised — service="${config.serviceName}" v${config.serviceVersion}`)
