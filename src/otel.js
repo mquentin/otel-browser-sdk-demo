@@ -109,26 +109,29 @@ export function initOtel(config) {
   const traceExporter = new OTLPTraceExporter({ url: signalUrl(baseUrl, 'traces') })
   const traceProvider = new WebTracerProvider({ resource })
 
+  // CustomAttributesProcessor first so attrs are on the span before any exporter.
+  traceProvider.addSpanProcessor(customAttrsProcessor)
   traceProvider.addSpanProcessor(new BatchSpanProcessor(traceExporter, {
     maxExportBatchSize:    10,
     scheduledDelayMillis: 1_000,
   }))
   traceProvider.addSpanProcessor(new SimpleSpanProcessor(new UISpanExporter()))
   traceProvider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()))
-  traceProvider.addSpanProcessor(customAttrsProcessor)
   traceProvider.register()
 
   // ── Logs ────────────────────────────────────────────────────────────────────
   const logExporter  = new OTLPLogExporter({ url: signalUrl(baseUrl, 'logs') })
   const logProvider  = new LoggerProvider({ resource })
 
+  // CustomAttributesLogProcessor must be first so attrs are stamped before
+  // any exporter (Simple or Batch) sees the record.
+  logProvider.addLogRecordProcessor(new CustomAttributesLogProcessor())
   logProvider.addLogRecordProcessor(new BatchLogRecordProcessor(logExporter, {
     maxExportBatchSize:    10,
     scheduledDelayMillis: 1_000,
   }))
   logProvider.addLogRecordProcessor(new SimpleLogRecordProcessor(new UILogExporter()))
   logProvider.addLogRecordProcessor(new SimpleLogRecordProcessor(new ConsoleLogRecordExporter()))
-  logProvider.addLogRecordProcessor(new CustomAttributesLogProcessor())
   logs.setGlobalLoggerProvider(logProvider)
 
   // ── Auto-instrumentations ───────────────────────────────────────────────────
