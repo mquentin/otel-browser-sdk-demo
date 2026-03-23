@@ -68,45 +68,24 @@ class UILogExporter {
   shutdown() { return Promise.resolve() }
 }
 
-// ── Custom attributes ─────────────────────────────────────────────────────────
-// Attrs are stored on the processor instance. The log processor closes over
-// the same instance inside initOtel so both signals share one source of truth.
-
-export class CustomAttributesProcessor {
-  attrs = {}
-
-  update(attrs) {
-    console.log('[CustomAttrs] update() called — new attrs:', attrs)
-    this.attrs = { ...attrs }
-  }
-
-  // SpanProcessor interface
-  onStart(span) {
-    console.log('[CustomAttrs] onStart() — span:', span.name, '— current attrs:', this.attrs)
-    for (const [k, v] of Object.entries(this.attrs)) span.setAttribute(k, v)
-  }
-  onEnd() {}
-  shutdown()   { return Promise.resolve() }
-  forceFlush() { return Promise.resolve() }
-}
-
 // ── initOtel ──────────────────────────────────────────────────────────────────
+// customAttrs are merged into the Resource so they appear in resource.attributes
+// on every span and log record — not as per-signal attributes.
 
-export function initOtel(config) {
+export function initOtel(config, customAttrs = {}) {
   const baseUrl  = config.otlpExporterConfig.url
+
+  // Custom attributes become resource attributes shared by all signals.
   const resource = new Resource({
     [ATTR_SERVICE_NAME]:    config.serviceName,
     [ATTR_SERVICE_VERSION]: config.serviceVersion,
+    ...customAttrs,
   })
-
-  const customAttrsProcessor = new CustomAttributesProcessor()
 
   // ── Traces ──────────────────────────────────────────────────────────────────
   const traceExporter = new OTLPTraceExporter({ url: signalUrl(baseUrl, 'traces') })
   const traceProvider = new WebTracerProvider({ resource })
 
-  // CustomAttributesProcessor first so attrs are on the span before any exporter.
-  traceProvider.addSpanProcessor(customAttrsProcessor)
   traceProvider.addSpanProcessor(new BatchSpanProcessor(traceExporter, {
     maxExportBatchSize:    10,
     scheduledDelayMillis: 1_000,
@@ -119,16 +98,6 @@ export function initOtel(config) {
   const logExporter  = new OTLPLogExporter({ url: signalUrl(baseUrl, 'logs') })
   const logProvider  = new LoggerProvider({ resource })
 
-  // Inline log processor closes over customAttrsProcessor — same instance,
-  // no shared module state needed.
-  logProvider.addLogRecordProcessor({
-    onEmit(logRecord) {
-      console.log('[CustomAttrs] onEmit() — current attrs:', customAttrsProcessor.attrs)
-      for (const [k, v] of Object.entries(customAttrsProcessor.attrs)) logRecord.setAttribute(k, v)
-    },
-    shutdown()   { return Promise.resolve() },
-    forceFlush() { return Promise.resolve() },
-  })
   logProvider.addLogRecordProcessor(new BatchLogRecordProcessor(logExporter, {
     maxExportBatchSize:    10,
     scheduledDelayMillis: 1_000,
@@ -154,6 +123,5 @@ export function initOtel(config) {
   return {
     tracer: trace.getTracer(config.serviceName, config.serviceVersion),
     logger: logs.getLogger(config.serviceName, config.serviceVersion),
-    customAttrsProcessor,
   }
 }

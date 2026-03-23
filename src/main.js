@@ -1,8 +1,12 @@
 // main.js — entry point
 //
 // 1. Initialise the config form with defaults / query string
-// 2. Read config from the form and boot the OTel SDK
-// 3. Keep the custom-attributes processor in sync with the form
+// 2. Read config + custom attrs from the form and boot the OTel SDK
+//    Custom attrs are resource attributes — they go into Resource, not onto
+//    individual spans/logs.
+// 3. When config/attrs change, show a "Reinit SDK" button.
+//    Clicking it reloads the page; the URL QS carries the new config so the
+//    SDK boots fresh with the updated resource.
 // 4. Bind all action buttons
 
 import './style.css'
@@ -19,13 +23,14 @@ import { createActions } from './actions.js'
 
 const initialConfig = parseConfigFromQueryString()
 
-// Called whenever any form field or custom attribute changes
+// Called whenever any form field or custom attribute changes.
+// We don't hot-reinit the SDK because custom attrs live in the Resource which
+// is immutable — instead we surface a "Reinit SDK" button.
 function onConfigChange() {
   const config = readConfigFromForm()
   const customAttrs = readCustomAttributes()
   updateSnippet(config, customAttrs)
-  console.log('[onConfigChange] handle=', handle, 'customAttrs=', customAttrs)
-  if (handle) handle.customAttrsProcessor.update(customAttrs)
+  showReinitBanner()
 }
 
 initConfigForm(initialConfig, onConfigChange)
@@ -33,22 +38,23 @@ initCustomAttributes(initialConfig.customAttributes, onConfigChange)
 
 // ── 2. Boot SDK ───────────────────────────────────────────────────────────────
 
-const config = readConfigFromForm()
-updateSnippet(config, initialConfig.customAttributes)
+const config      = readConfigFromForm()
+const customAttrs = readCustomAttributes()
+updateSnippet(config, customAttrs)
 setStatus('loading', 'Initialising SDK…')
 
 let handle = null
 
 try {
-  handle = initOtel(config)
-  // Seed the processor with any attrs already in the form (e.g. loaded from QS)
-  handle.customAttrsProcessor.update(readCustomAttributes())
+  handle = initOtel(config, customAttrs)
 
   setStatus('ok', `SDK ready · ${config.otlpExporterConfig.url}`)
   log('info',  `SDK initialised — service="${config.serviceName}" v${config.serviceVersion}`)
   log('info',  `OTLP endpoint → ${config.otlpExporterConfig.url}`)
-
-  log('muted', 'Open DevTools → Console to see full span objects')
+  if (Object.keys(customAttrs).length) {
+    log('info', `Resource attrs → ${JSON.stringify(customAttrs)}`)
+  }
+  log('muted', 'Open DevTools → Console to see full span/log objects')
 } catch (err) {
   const msg = err instanceof Error ? err.message : String(err)
   setStatus('error', 'SDK init failed — check console')
@@ -56,7 +62,26 @@ try {
   console.error('[OTel Demo] SDK init failed:', err)
 }
 
-// ── 3. Action buttons ─────────────────────────────────────────────────────────
+// ── 3. Reinit banner ──────────────────────────────────────────────────────────
+
+function showReinitBanner() {
+  let banner = document.getElementById('reinit-banner')
+  if (banner) return   // already visible
+  banner = document.createElement('div')
+  banner.id = 'reinit-banner'
+  banner.className = 'reinit-banner'
+  banner.innerHTML =
+    '⚠️ Resource attributes are set at SDK init — ' +
+    '<button id="btn-reinit">Reinit SDK</button> to apply changes'
+  // Insert banner after the custom-attrs section
+  const attrsSection = document.querySelector('.attrs-section')
+  attrsSection?.after(banner)
+  document.getElementById('btn-reinit').addEventListener('click', () => {
+    window.location.reload()
+  })
+}
+
+// ── 4. Action buttons ─────────────────────────────────────────────────────────
 
 const noopSpan = {
   setAttribute:    () => noopSpan,
