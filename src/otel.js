@@ -88,7 +88,7 @@ export function initOtel(config, customAttrs = {}) {
   traceProvider.register()
 
   // ── Logs ────────────────────────────────────────────────────────────────────
-  const logExporter  = new OTLPLogExporter({ url: config.logsUrl })
+  const logExporter  = new OTLPLogExporter({ url: config.logsUrl, headers: {} })
   const logProvider  = new LoggerProvider({ resource })
 
   logProvider.addLogRecordProcessor(new BatchLogRecordProcessor(logExporter, {
