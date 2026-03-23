@@ -75,10 +75,14 @@ class UILogExporter {
 export class CustomAttributesProcessor {
   attrs = {}
 
-  update(attrs) { this.attrs = { ...attrs } }
+  update(attrs) {
+    console.log('[CustomAttrs] update() called — new attrs:', attrs)
+    this.attrs = { ...attrs }
+  }
 
   // SpanProcessor interface
   onStart(span) {
+    console.log('[CustomAttrs] onStart() — span:', span.name, '— current attrs:', this.attrs)
     for (const [k, v] of Object.entries(this.attrs)) span.setAttribute(k, v)
   }
   onEnd() {}
@@ -119,6 +123,7 @@ export function initOtel(config) {
   // no shared module state needed.
   logProvider.addLogRecordProcessor({
     onEmit(logRecord) {
+      console.log('[CustomAttrs] onEmit() — current attrs:', customAttrsProcessor.attrs)
       for (const [k, v] of Object.entries(customAttrsProcessor.attrs)) logRecord.setAttribute(k, v)
     },
     shutdown()   { return Promise.resolve() },

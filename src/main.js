@@ -24,6 +24,7 @@ function onConfigChange() {
   const config = readConfigFromForm()
   const customAttrs = readCustomAttributes()
   updateSnippet(config, customAttrs)
+  console.log('[onConfigChange] handle=', handle, 'customAttrs=', customAttrs)
   if (handle) handle.customAttrsProcessor.update(customAttrs)
 }
 
