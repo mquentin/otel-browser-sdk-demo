@@ -1,0 +1,65 @@
+# OTel Collector config for the browser SDK demo
+#
+# The collector acts as a CORS-capable proxy between the browser and Datadog:
+#
+#   Browser SDK  →  localhost:4318 (CORS allowed)  →  Datadog OTLP intake
+#
+# The browser cannot send directly to otlp.datadoghq.com because Datadog's
+# CORS policy only allows *.datadoghq.com origins.  The collector has no
+# such constraint — it forwards server-to-server with the API key as a header.
+#
+# Usage:
+#   export DD_API_KEY=<your-32-char-api-key>
+#   export DD_SITE=datadoghq.com            # or datadoghq.eu, us3.datadoghq.com, …
+#   docker run --rm \
+#     -e DD_API_KEY -e DD_SITE \
+#     -p 4318:4318 \
+#     -v $(pwd)/collector/otel-collector-config.yaml:/etc/otelcol-contrib/config.yaml \
+#     otel/opentelemetry-collector-contrib:latest
+#
+# The demo app defaults to:
+#   tracesUrl = http://localhost:4318/v1/traces
+#   logsUrl   = http://localhost:4318/v1/logs
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          # Allow requests from wherever the demo app is served.
+          # Add your own origin if you host the demo elsewhere.
+          allowed_origins:
+            - "http://localhost:*"
+            - "http://127.0.0.1:*"
+            - "https://mquentin.github.io"
+          allowed_headers:
+            - "*"
+
+processors:
+  batch:
+    send_batch_size: 100
+    timeout: 5s
+
+exporters:
+  # Forward to Datadog's OTLP intake with the API key as a server-side header.
+  # The browser never sees this key.
+  otlphttp/datadog:
+    endpoint: "https://otlp.${env:DD_SITE}"
+    headers:
+      DD-Api-Key: "${env:DD_API_KEY}"
+
+  # Uncomment to also print everything to the collector's stdout (useful for debugging).
+  # debug:
+  #   verbosity: detailed
+
+service:
+  pipelines:
+    traces:
+      receivers:  [otlp]
+      processors: [batch]
+      exporters:  [otlphttp/datadog]
+    logs:
+      receivers:  [otlp]
+      processors: [batch]
+      exporters:  [otlphttp/datadog]
