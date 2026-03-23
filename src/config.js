@@ -1,19 +1,17 @@
 // config.js — SDK config defaults, QS parser, and form reader
 //
 // Query string parameters:
-//   serviceName    → sdkConfig.serviceName
-//   serviceVersion → sdkConfig.serviceVersion
-//   otlpUrl        → sdkConfig.otlpExporterConfig.url  (base collector endpoint)
-//   attrs          → sdkConfig.customAttributes         (URL-encoded JSON)
-//
-// Signal URLs are derived automatically:
-//   traces → otlpUrl + /v1/traces
-//   logs   → otlpUrl + /v1/logs
+//   serviceName    → config.serviceName
+//   serviceVersion → config.serviceVersion
+//   tracesUrl      → config.tracesUrl   (full OTLP traces endpoint)
+//   logsUrl        → config.logsUrl     (full OTLP logs endpoint)
+//   attrs          → config.customAttributes  (URL-encoded JSON)
 
 export const DEFAULTS = {
   serviceName:    'browser-demo',
   serviceVersion: '1.0.0',
-  otlpUrl:        'http://localhost:4318',
+  tracesUrl:      'http://localhost:4318/v1/traces',
+  logsUrl:        'http://localhost:4318/v1/logs',
 }
 
 function parseJson(raw, fallback) {
@@ -33,9 +31,8 @@ export function parseConfigFromQueryString() {
   return {
     serviceName:      qs.get('serviceName')    ?? DEFAULTS.serviceName,
     serviceVersion:   qs.get('serviceVersion') ?? DEFAULTS.serviceVersion,
-    otlpExporterConfig: {
-      url: qs.get('otlpUrl') ?? DEFAULTS.otlpUrl,
-    },
+    tracesUrl:        qs.get('tracesUrl')       ?? DEFAULTS.tracesUrl,
+    logsUrl:          qs.get('logsUrl')         ?? DEFAULTS.logsUrl,
     customAttributes: parseJson(qs.get('attrs'), {}),
   }
 }
@@ -47,11 +44,10 @@ function field(id) {
 
 export function readConfigFromForm() {
   return {
-    serviceName:    field('ub-sn')  || DEFAULTS.serviceName,
-    serviceVersion: field('ub-sv')  || DEFAULTS.serviceVersion,
-    otlpExporterConfig: {
-      url: field('ub-url') || DEFAULTS.otlpUrl,
-    },
+    serviceName:    field('ub-sn')         || DEFAULTS.serviceName,
+    serviceVersion: field('ub-sv')         || DEFAULTS.serviceVersion,
+    tracesUrl:      field('ub-traces-url') || DEFAULTS.tracesUrl,
+    logsUrl:        field('ub-logs-url')   || DEFAULTS.logsUrl,
     customAttributes: {},  // populated separately via readCustomAttributes()
   }
 }

@@ -29,12 +29,6 @@ import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xm
 
 import { log } from './ui.js'
 
-// ── URL helpers ───────────────────────────────────────────────────────────────
-
-function signalUrl(base, signal) {
-  return base.replace(/\/$/, '') + '/v1/' + signal
-}
-
 // ── UISpanExporter ────────────────────────────────────────────────────────────
 
 class UISpanExporter {
@@ -69,12 +63,11 @@ class UILogExporter {
 }
 
 // ── initOtel ──────────────────────────────────────────────────────────────────
+// tracesUrl and logsUrl are used as-is — no path is appended.
 // customAttrs are merged into the Resource so they appear in resource.attributes
-// on every span and log record — not as per-signal attributes.
+// on every span and log record.
 
 export function initOtel(config, customAttrs = {}) {
-  const baseUrl  = config.otlpExporterConfig.url
-
   // Custom attributes become resource attributes shared by all signals.
   const resource = new Resource({
     [ATTR_SERVICE_NAME]:    config.serviceName,
@@ -83,7 +76,7 @@ export function initOtel(config, customAttrs = {}) {
   })
 
   // ── Traces ──────────────────────────────────────────────────────────────────
-  const traceExporter = new OTLPTraceExporter({ url: signalUrl(baseUrl, 'traces') })
+  const traceExporter = new OTLPTraceExporter({ url: config.tracesUrl })
   const traceProvider = new WebTracerProvider({ resource })
 
   traceProvider.addSpanProcessor(new BatchSpanProcessor(traceExporter, {
@@ -95,7 +88,7 @@ export function initOtel(config, customAttrs = {}) {
   traceProvider.register()
 
   // ── Logs ────────────────────────────────────────────────────────────────────
-  const logExporter  = new OTLPLogExporter({ url: signalUrl(baseUrl, 'logs') })
+  const logExporter  = new OTLPLogExporter({ url: config.logsUrl })
   const logProvider  = new LoggerProvider({ resource })
 
   logProvider.addLogRecordProcessor(new BatchLogRecordProcessor(logExporter, {

@@ -48,9 +48,10 @@ let handle = null
 try {
   handle = initOtel(config, customAttrs)
 
-  setStatus('ok', `SDK ready · ${config.otlpExporterConfig.url}`)
+  setStatus('ok', `SDK ready · ${config.tracesUrl}`)
   log('info',  `SDK initialised — service="${config.serviceName}" v${config.serviceVersion}`)
-  log('info',  `OTLP endpoint → ${config.otlpExporterConfig.url}`)
+  log('info',  `Traces → ${config.tracesUrl}`)
+  log('info',  `Logs   → ${config.logsUrl}`)
   if (Object.keys(customAttrs).length) {
     log('info', `Resource attrs → ${JSON.stringify(customAttrs)}`)
   }

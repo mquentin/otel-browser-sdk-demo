@@ -74,8 +74,6 @@ export function updateSnippet(config, customAttrs) {
         ).join(',\n')
       }\n  }`
 
-  const base = escHtml(config.otlpExporterConfig.url.replace(/\/$/, ''))
-
   document.getElementById('code-snippet').innerHTML =
     `<span class="kw">import</span> { <span class="fn">BrowserSDK</span> } <span class="kw">from</span> <span class="str">'@opentelemetry/browser-instrumentation'</span>;
 
@@ -83,8 +81,8 @@ export function updateSnippet(config, customAttrs) {
   <span class="prop">serviceName</span>:    <span class="str">'${escHtml(config.serviceName)}'</span>,
   <span class="prop">serviceVersion</span>: <span class="str">'${escHtml(config.serviceVersion)}'</span>,
   <span class="prop">otlpExporterConfig</span>: {
-    <span class="prop">tracesUrl</span>: <span class="str">'${base}/v1/traces'</span>,
-    <span class="prop">logsUrl</span>:   <span class="str">'${base}/v1/logs'</span>,
+    <span class="prop">tracesUrl</span>: <span class="str">'${escHtml(config.tracesUrl)}'</span>,
+    <span class="prop">logsUrl</span>:   <span class="str">'${escHtml(config.logsUrl)}'</span>,
   }${attrsStr},
 });
 
@@ -94,15 +92,17 @@ sdk.<span class="fn">start</span>();`
 // ── URL sync ──────────────────────────────────────────────────────────────────
 
 function buildUrl() {
-  const sn   = document.getElementById('ub-sn').value.trim()
-  const sv   = document.getElementById('ub-sv').value.trim()
-  const url  = document.getElementById('ub-url').value.trim()
-  const attrs = readCustomAttributes()
+  const sn        = document.getElementById('ub-sn').value.trim()
+  const sv        = document.getElementById('ub-sv').value.trim()
+  const tracesUrl = document.getElementById('ub-traces-url').value.trim()
+  const logsUrl   = document.getElementById('ub-logs-url').value.trim()
+  const attrs     = readCustomAttributes()
 
   const p = new URLSearchParams()
-  if (sn)  p.set('serviceName',    sn)
-  if (sv)  p.set('serviceVersion', sv)
-  if (url) p.set('otlpUrl',        url)
+  if (sn)        p.set('serviceName',    sn)
+  if (sv)        p.set('serviceVersion', sv)
+  if (tracesUrl) p.set('tracesUrl',      tracesUrl)
+  if (logsUrl)   p.set('logsUrl',        logsUrl)
   const attrsEntries = Object.entries(attrs)
   if (attrsEntries.length > 0) {
     p.set('attrs', encodeURIComponent(JSON.stringify(attrs)))
@@ -131,12 +131,13 @@ function copyUrl() {
 // ── Config form ───────────────────────────────────────────────────────────────
 
 export function initConfigForm(initialConfig, onChange) {
-  document.getElementById('ub-sn').value  = initialConfig.serviceName
-  document.getElementById('ub-sv').value  = initialConfig.serviceVersion
-  document.getElementById('ub-url').value = initialConfig.otlpExporterConfig.url
+  document.getElementById('ub-sn').value         = initialConfig.serviceName
+  document.getElementById('ub-sv').value         = initialConfig.serviceVersion
+  document.getElementById('ub-traces-url').value = initialConfig.tracesUrl
+  document.getElementById('ub-logs-url').value   = initialConfig.logsUrl
 
   const handleChange = () => { syncUrl(); onChange() }
-  ;['ub-sn', 'ub-sv', 'ub-url'].forEach(id =>
+  ;['ub-sn', 'ub-sv', 'ub-traces-url', 'ub-logs-url'].forEach(id =>
     document.getElementById(id).addEventListener('input', handleChange)
   )
 
