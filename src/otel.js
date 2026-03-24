@@ -76,7 +76,7 @@ export function initOtel(config, customAttrs = {}) {
   })
 
   // ── Traces ──────────────────────────────────────────────────────────────────
-  const traceExporter = new OTLPTraceExporter({ url: config.tracesUrl, headers: {} })
+  const traceExporter = new OTLPTraceExporter({ url: config.tracesUrl })
   const traceProvider = new WebTracerProvider({ resource })
 
   traceProvider.addSpanProcessor(new BatchSpanProcessor(traceExporter, {
@@ -88,7 +88,7 @@ export function initOtel(config, customAttrs = {}) {
   traceProvider.register()
 
   // ── Logs ────────────────────────────────────────────────────────────────────
-  const logExporter  = new OTLPLogExporter({ url: config.logsUrl, headers: {} })
+  const logExporter  = new OTLPLogExporter({ url: config.logsUrl })
   const logProvider  = new LoggerProvider({ resource })
 
   logProvider.addLogRecordProcessor(new BatchLogRecordProcessor(logExporter, {
