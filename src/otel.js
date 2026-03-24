@@ -3,6 +3,7 @@
 import { trace } from '@opentelemetry/api'
 import { logs } from '@opentelemetry/api-logs'
 import { WebTracerProvider } from '@opentelemetry/sdk-trace-web'
+import { ZoneContextManager } from '@opentelemetry/context-zone'
 import {
   BatchSpanProcessor,
   ConsoleSpanExporter,
@@ -90,7 +91,7 @@ export function initOtel(config, customAttrs = {}) {
       new SimpleSpanProcessor(new ConsoleSpanExporter()),
     ],
   })
-  traceProvider.register()
+  traceProvider.register({ contextManager: new ZoneContextManager() })
 
   // ── Logs ────────────────────────────────────────────────────────────────────
   const logExporter = new OTLPLogExporter({ url: config.logsUrl, headers: {} })
