@@ -17,7 +17,7 @@ import {
   SimpleLogRecordProcessor,
 } from '@opentelemetry/sdk-logs'
 import { OTLPLogExporter } from '@opentelemetry/exporter-logs-otlp-http'
-import { Resource } from '@opentelemetry/resources'
+import { resourceFromAttributes } from '@opentelemetry/resources'
 import {
   ATTR_SERVICE_NAME,
   ATTR_SERVICE_VERSION,
@@ -69,14 +69,14 @@ class UILogExporter {
 
 export function initOtel(config, customAttrs = {}) {
   // Custom attributes become resource attributes shared by all signals.
-  const resource = new Resource({
+  const resource = resourceFromAttributes({
     [ATTR_SERVICE_NAME]:    config.serviceName,
     [ATTR_SERVICE_VERSION]: config.serviceVersion,
     ...customAttrs,
   })
 
   // ── Traces ──────────────────────────────────────────────────────────────────
-  const traceExporter = new OTLPTraceExporter({ url: config.tracesUrl })
+  const traceExporter = new OTLPTraceExporter({ url: config.tracesUrl, headers: {} })
   const traceProvider = new WebTracerProvider({
     resource,
     spanProcessors: [
@@ -91,10 +91,10 @@ export function initOtel(config, customAttrs = {}) {
   traceProvider.register()
 
   // ── Logs ────────────────────────────────────────────────────────────────────
-  const logExporter = new OTLPLogExporter({ url: config.logsUrl })
+  const logExporter = new OTLPLogExporter({ url: config.logsUrl, headers: {} })
   const logProvider = new LoggerProvider({
     resource,
-    logRecordProcessors: [
+    processors: [
       new BatchLogRecordProcessor(logExporter, {
         maxExportBatchSize:    10,
         scheduledDelayMillis: 1_000,
