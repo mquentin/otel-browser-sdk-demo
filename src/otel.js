@@ -76,27 +76,33 @@ export function initOtel(config, customAttrs = {}) {
   })
 
   // ── Traces ──────────────────────────────────────────────────────────────────
-  const traceExporter = new OTLPTraceExporter({ url: config.tracesUrl, headers: {} })
-  const traceProvider = new WebTracerProvider({ resource })
-
-  traceProvider.addSpanProcessor(new BatchSpanProcessor(traceExporter, {
-    maxExportBatchSize:    10,
-    scheduledDelayMillis: 1_000,
-  }))
-  traceProvider.addSpanProcessor(new SimpleSpanProcessor(new UISpanExporter()))
-  traceProvider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()))
+  const traceExporter = new OTLPTraceExporter({ url: config.tracesUrl })
+  const traceProvider = new WebTracerProvider({
+    resource,
+    spanProcessors: [
+      new BatchSpanProcessor(traceExporter, {
+        maxExportBatchSize:    10,
+        scheduledDelayMillis: 1_000,
+      }),
+      new SimpleSpanProcessor(new UISpanExporter()),
+      new SimpleSpanProcessor(new ConsoleSpanExporter()),
+    ],
+  })
   traceProvider.register()
 
   // ── Logs ────────────────────────────────────────────────────────────────────
-  const logExporter  = new OTLPLogExporter({ url: config.logsUrl, headers: {} })
-  const logProvider  = new LoggerProvider({ resource })
-
-  logProvider.addLogRecordProcessor(new BatchLogRecordProcessor(logExporter, {
-    maxExportBatchSize:    10,
-    scheduledDelayMillis: 1_000,
-  }))
-  logProvider.addLogRecordProcessor(new SimpleLogRecordProcessor(new UILogExporter()))
-  logProvider.addLogRecordProcessor(new SimpleLogRecordProcessor(new ConsoleLogRecordExporter()))
+  const logExporter = new OTLPLogExporter({ url: config.logsUrl })
+  const logProvider = new LoggerProvider({
+    resource,
+    logRecordProcessors: [
+      new BatchLogRecordProcessor(logExporter, {
+        maxExportBatchSize:    10,
+        scheduledDelayMillis: 1_000,
+      }),
+      new SimpleLogRecordProcessor(new UILogExporter()),
+      new SimpleLogRecordProcessor(new ConsoleLogRecordExporter()),
+    ],
+  })
   logs.setGlobalLoggerProvider(logProvider)
 
   // ── Auto-instrumentations ───────────────────────────────────────────────────
