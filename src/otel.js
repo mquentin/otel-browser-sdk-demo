@@ -24,6 +24,7 @@ import {
 } from '@opentelemetry/semantic-conventions'
 import { registerInstrumentations } from '@opentelemetry/instrumentation'
 import { DocumentLoadInstrumentation } from '@opentelemetry/instrumentation-document-load'
+import { UserInteractionInstrumentation } from '@opentelemetry/instrumentation-user-interaction'
 import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch'
 import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request'
 
@@ -109,6 +110,9 @@ export function initOtel(config, customAttrs = {}) {
   registerInstrumentations({
     instrumentations: [
       new DocumentLoadInstrumentation(),
+      new UserInteractionInstrumentation({
+        eventNames: ['click'],
+      }),
       new FetchInstrumentation({
         propagateTraceHeaderCorsUrls: [/.*/],
         clearTimingResources: true,
