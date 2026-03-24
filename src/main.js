@@ -7,15 +7,15 @@
 //    (resource attributes are immutable; a page reload applies changes via QS)
 // 5. Bind all action buttons
 
-import './style.css'
-import { readConfigFromForm, parseConfigFromQueryString } from './config.js'
+import './app/style.css'
+import { readConfigFromForm, parseConfigFromQueryString } from './app/config.js'
 import {
   log, clearLog, setStatus, enableButtons,
   initConfigForm, initCustomAttributes,
   readCustomAttributes, updateSnippet,
-} from './ui.js'
+} from './app/ui.js'
 import { initOtel } from './otel.js'
-import { createActions } from './actions.js'
+import { createActions } from './app/actions.js'
 
 // ── 1. Parse config from URL query string ────────────────────────────────────
 // This is the single authoritative source for the initial config.

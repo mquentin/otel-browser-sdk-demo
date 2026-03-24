@@ -16,7 +16,8 @@ function escHtml(s) {
 
 export function log(type, msg) {
   const body = document.getElementById('log-body')
-  if (body.querySelector('.le-msg.muted')) body.innerHTML = ''
+  const placeholder = body.querySelector('[data-placeholder]')
+  if (placeholder) body.innerHTML = ''
 
   const t = new Date().toLocaleTimeString([], {
     hour: '2-digit', minute: '2-digit', second: '2-digit',
@@ -36,7 +37,7 @@ export function log(type, msg) {
 export function clearLog() {
   logCount = 0
   document.getElementById('log-body').innerHTML = `
-    <div class="le">
+    <div class="le" data-placeholder>
       <span class="le-time">—</span>
       <span>·</span>
       <span class="le-msg muted">Log cleared.</span>

@@ -30,7 +30,7 @@ import { UserInteractionInstrumentation } from '@opentelemetry/instrumentation-u
 import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch'
 import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request'
 
-import { log } from './ui.js'
+import { log } from './app/ui.js'
 
 // ── UISpanExporter ────────────────────────────────────────────────────────────
 
