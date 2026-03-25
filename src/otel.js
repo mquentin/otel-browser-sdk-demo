@@ -3,13 +3,11 @@
 import { trace } from '@opentelemetry/api'
 import { logs } from '@opentelemetry/api-logs'
 import { WebTracerProvider } from '@opentelemetry/sdk-trace-web'
-import { ZoneContextManager } from '@opentelemetry/context-zone'
 import {
   BatchSpanProcessor,
   ConsoleSpanExporter,
   SimpleSpanProcessor,
 } from '@opentelemetry/sdk-trace-base'
-import { ExportResultCode } from '@opentelemetry/core'
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http'
 import {
   LoggerProvider,
@@ -24,46 +22,13 @@ import {
   ATTR_SERVICE_VERSION,
 } from '@opentelemetry/semantic-conventions'
 import { registerInstrumentations } from '@opentelemetry/instrumentation'
-import { DocumentLoadInstrumentation } from '@opentelemetry/instrumentation-document-load'
-import { LongTaskInstrumentation } from '@opentelemetry/instrumentation-long-task'
-import { UserInteractionInstrumentation } from '@opentelemetry/instrumentation-user-interaction'
+import { NavigationTimingInstrumentation } from '@opentelemetry/browser-instrumentation/experimental/navigation-timing'
+import { UserActionInstrumentation } from '@opentelemetry/browser-instrumentation/experimental/user-action'
+import { WebVitalsInstrumentation } from '@opentelemetry/browser-instrumentation/experimental/web-vitals'
 import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch'
 import { XMLHttpRequestInstrumentation } from '@opentelemetry/instrumentation-xml-http-request'
 
-import { log } from './app/ui.js'
-
-// ── UISpanExporter ────────────────────────────────────────────────────────────
-
-class UISpanExporter {
-  export(spans, resultCallback) {
-    for (const span of spans) {
-      const [secs, nanos] = span.duration
-      const durationMs = (secs * 1_000 + nanos / 1_000_000).toFixed(1)
-      const isError = span.status.code === 2
-      const icon    = isError ? '🔴' : '🟢'
-      const traceId = span.spanContext().traceId.slice(0, 16) + '…'
-      log('span', `${icon} [span] ${span.name} · ${durationMs}ms · trace=${traceId}`)
-    }
-    resultCallback({ code: ExportResultCode.SUCCESS })
-  }
-  shutdown() { return Promise.resolve() }
-}
-
-// ── UILogExporter ─────────────────────────────────────────────────────────────
-
-class UILogExporter {
-  export(logRecords, resultCallback) {
-    for (const record of logRecords) {
-      const sev = record.severityText ?? 'INFO'
-      const body = typeof record.body === 'string'
-        ? record.body
-        : JSON.stringify(record.body)
-      log('muted', `📋 [log] ${sev} · ${body}`)
-    }
-    resultCallback({ code: ExportResultCode.SUCCESS })
-  }
-  shutdown() { return Promise.resolve() }
-}
+import { UISpanExporter, UILogExporter } from './app/ui-exporters.js'
 
 // ── initOtel ──────────────────────────────────────────────────────────────────
 // tracesUrl and logsUrl are used as-is — no path is appended.
@@ -91,7 +56,7 @@ export function initOtel(config, customAttrs = {}) {
       new SimpleSpanProcessor(new ConsoleSpanExporter()),
     ],
   })
-  traceProvider.register({ contextManager: new ZoneContextManager() })
+  traceProvider.register()
 
   // ── Logs ────────────────────────────────────────────────────────────────────
   const logExporter = new OTLPLogExporter({ url: config.logsUrl, headers: {} })
@@ -111,11 +76,9 @@ export function initOtel(config, customAttrs = {}) {
   // ── Auto-instrumentations ───────────────────────────────────────────────────
   registerInstrumentations({
     instrumentations: [
-      new DocumentLoadInstrumentation(),
-      new LongTaskInstrumentation(),
-      new UserInteractionInstrumentation({
-        eventNames: ['click'],
-      }),
+      new NavigationTimingInstrumentation(),
+      new UserActionInstrumentation(),
+      new WebVitalsInstrumentation({ includeRawAttribution: true }),
       new FetchInstrumentation({
         propagateTraceHeaderCorsUrls: [/.*/],
         clearTimingResources: true,
