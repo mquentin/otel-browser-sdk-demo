@@ -12,7 +12,7 @@ import { readConfigFromForm, parseConfigFromQueryString } from './app/config.js'
 import {
   log, clearLog, setStatus, enableButtons,
   initConfigForm, initCustomAttributes,
-  readCustomAttributes, updateSnippet,
+  readCustomAttributes, updateSnippet, syncUrl,
 } from './app/ui.js'
 import { initOtel } from './otel.js'
 import { createActions } from './app/actions.js'
@@ -36,6 +36,7 @@ function onConfigChange() {
 
 initConfigForm(initialConfig, onConfigChange)
 initCustomAttributes(initialAttrs, onConfigChange)
+syncUrl() // re-sync after attr rows are in the DOM so ?attrs= is not stripped
 
 // ── 3. Boot SDK from the parsed config ───────────────────────────────────────
 // Use initialConfig / initialAttrs directly — no DOM round-trip needed.
